@@ -60,9 +60,9 @@ def richer_than_england
   FROM
     countries
   WHERE
-    gdp/population > (
+    (gdp/population) > (
       SELECT
-        gdp/population
+        (gdp/population)
       FROM 
         countries
       WHERE 
@@ -96,15 +96,65 @@ def population_constraint
   # Which country has a population that is more than Canada but less than
   # Poland? Show the name and the population.
   execute(<<-SQL)
+    SELECT
+      name, population
+    FROM
+      countries
+    WHERE
+      population > (
+        SELECT 
+          population
+        FROM 
+          countries
+        WHERE 
+          name = 'Canada'
+      ) AND population < (
+        SELECT population
+        FROM countries
+        WHERE name = 'Poland'
+      );
+    SQL
+  end
   
-  SQL
-end
+  # our population is > (subquery, call all countries more than Canada) 
+  # AND < (subquery, all countreis less than Poland)
+  # Between is inclusive, so between would include Canada and Poland
+
 
 def sparse_continents
   # Find every country that belongs to a continent where each country's
   # population is less than 25,000,000. Show name, continent and
   # population.
+
+  #show name, continent, and population of countries that are in the continent(s)
+  #where every country has a population less than 25,000,000
+  #throw out continents that have a country with more than 25M
+
   # Hint: Sometimes rewording the problem can help you see the solution.
   execute(<<-SQL)
+  SELECT name, continent, population
+  FROM countries
+  WHERE continent IN (
+    SELECT
+      continent
+    FROM
+      countries
+    GROUP BY 
+      continent
+      HAVING MAX(population) < 25000000
+      );
   SQL
 end
+
+
+
+# SELECT
+#   name, continent, population
+# FROM
+#   countries
+# WHERE
+#   continent NOT IN ( 
+#       SELECT DISTINCT continent
+#       FROM countries
+#       WHERE population > 25000000
+#);
